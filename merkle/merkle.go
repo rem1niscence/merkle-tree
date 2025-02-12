@@ -33,30 +33,50 @@ func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
 }
 
 func (m *MerkleTree) MerkleProof(value []byte) ([][]byte, error) {
+	hashes := make([][]byte, 0)
 	hash := sha256.Sum256(value)
-	node := m.findNode(hash[:], m.Root)
+	node := m.findNode(hash[:], m.Root, 1)
 	if node == nil {
 		return nil, fmt.Errorf("proof cannot be generated: %w", ErrNodeNotFound)
 	}
+	for {
+		// found the merkle root
+		if node.Parent == nil {
+			break
+		}
+		hashes = append(hashes, findSibling(node).Hash[:])
+		node = node.Parent
+	}
 
-	return [][]byte{}, nil
+	return hashes, nil
+}
+
+func findSibling(node *Node) *Node {
+	parent := node.Parent
+	if parent == nil {
+		return nil
+	}
+	if bytes.Equal(parent.Left.Hash[:], node.Hash[:]) {
+		return parent.Right
+	}
+	return parent.Left
 }
 
 // findNode traverses the merkle tree using Depth-First-Search and returns a node
 // with the given hash, or nil if not found
-func (m *MerkleTree) findNode(hash []byte, node *Node) *Node {
+func (m *MerkleTree) findNode(hash []byte, node *Node, height int) *Node {
 	if bytes.Equal(node.Hash[:], hash) {
 		return node
 	}
 
 	if node.Left != nil {
-		leftNode := m.findNode(hash, node.Left)
+		leftNode := m.findNode(hash, node.Left, height+1)
 		if leftNode != nil {
 			return leftNode
 		}
 	}
 	if node.Right != nil {
-		rightNode := m.findNode(hash, node.Right)
+		rightNode := m.findNode(hash, node.Right, height+1)
 		if rightNode != nil {
 			return rightNode
 		}
