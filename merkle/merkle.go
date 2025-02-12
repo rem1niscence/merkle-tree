@@ -32,8 +32,12 @@ func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
 	}, nil
 }
 
-func (m *MerkleTree) MerkleProof(value []byte) ([][]byte, error) {
-	hashes := make([][]byte, 0)
+func (m *MerkleTree) MerkleProof(value []byte) (*Proof, error) {
+	proof := &Proof{
+		Hashes: make([][]byte, 0),
+		Order:  make([]byte, 0),
+	}
+
 	hash := sha256.Sum256(value)
 	node := m.findNode(hash[:], m.Root, 1)
 	if node == nil {
@@ -44,22 +48,26 @@ func (m *MerkleTree) MerkleProof(value []byte) ([][]byte, error) {
 		if node.Parent == nil {
 			break
 		}
-		hashes = append(hashes, findSibling(node).Hash[:])
+		sibling, order := findSibling(node)
+		proof.Hashes = append(proof.Hashes, sibling.Hash[:])
+		proof.Order = append(proof.Order, order)
 		node = node.Parent
 	}
 
-	return hashes, nil
+	return proof, nil
 }
 
-func findSibling(node *Node) *Node {
+// findSibling returns the sibling of a given node if any, and whether such sibling
+// is a left or right node
+func findSibling(node *Node) (*Node, byte) {
 	parent := node.Parent
 	if parent == nil {
-		return nil
+		return nil, 0
 	}
 	if bytes.Equal(parent.Left.Hash[:], node.Hash[:]) {
-		return parent.Right
+		return parent.Right, right
 	}
-	return parent.Left
+	return parent.Left, left
 }
 
 // findNode traverses the merkle tree using Depth-First-Search and returns a node
