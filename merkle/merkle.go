@@ -17,10 +17,12 @@ type Node struct {
 	Parent *Node
 }
 
+// MerkleTree represents a Merkle Tree data structure with support for Merkle proofs
 type MerkleTree struct {
 	Root *Node
 }
 
+// NewMerkleTree creates a new Merkle Tree from the given data
 func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
 	root, err := buildMerkleTree(data)
 	if err != nil {
@@ -32,6 +34,7 @@ func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
 	}, nil
 }
 
+// MerkleProof generates a Merkle proof for a given value
 func (m *MerkleTree) MerkleProof(value []byte) (*Proof, error) {
 	proof := &Proof{
 		Hashes: make([][]byte, 0),
@@ -93,6 +96,7 @@ func (m *MerkleTree) findNode(hash []byte, node *Node, height int) *Node {
 	return nil
 }
 
+// buildMerkleTree builds a Merkle tree from the given data
 func buildMerkleTree(data [][]byte) (*Node, error) {
 	if len(data) == 0 {
 		return nil, ErrEmptyData
@@ -110,7 +114,8 @@ func buildMerkleTree(data [][]byte) (*Node, error) {
 		})
 	}
 	// need to duplicate the last node in order to make a balanced tree
-	// this one only applies for a single-item merkle tree
+	// is done in the loop too but this case covers the case where there is only
+	// one node
 	if len(nodes)%2 != 0 {
 		nodes = append(nodes, nodes[len(nodes)-1])
 	}

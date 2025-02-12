@@ -15,6 +15,8 @@ type Proof struct {
 	Order  []byte
 }
 
+// VerifyProof verifies a Merkle proof for a given value,
+// reconstructing the root hash and comparing it to the given root hash
 func VerifyProof(value []byte, proof *Proof, rootHash []byte) bool {
 	hash := sha256.Sum256(value)
 
