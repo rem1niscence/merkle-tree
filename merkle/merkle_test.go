@@ -74,6 +74,43 @@ func TestNewMerkleTree(t *testing.T) {
 	}
 }
 
+func TestMerkleProof(t *testing.T) {
+	// Sample data
+	data := [][]byte{
+		[]byte("a"), []byte("b"), []byte("c"), []byte("d"),
+		[]byte("e"), []byte("f"), []byte("g"), []byte("h"),
+	}
+
+	// Create the Merkle tree
+	tree, err := NewMerkleTree(data)
+	if err != nil {
+		t.Fatalf("failed to create Merkle tree: %v", err)
+	}
+
+	// Select a value to generate a proof for
+	targetValue := data[3] // "d"
+
+	// Generate the Merkle proof
+	proof, err := tree.MerkleProof(targetValue)
+	if err != nil {
+		t.Fatalf("failed to generate Merkle proof: %v", err)
+	}
+
+	// Get the root hash
+	rootHash := tree.Root.Hash[:]
+
+	// Verify the proof
+	if !VerifyProof(targetValue, proof, rootHash) {
+		t.Errorf("Merkle proof verification failed for value: %s", targetValue)
+	}
+
+	// Corrupt the proof by changing a hash
+	proof.Hashes[0][0] ^= 0xFF
+	if VerifyProof(targetValue, proof, rootHash) {
+		t.Errorf("Merkle proof verification should fail for modified proof")
+	}
+}
+
 func BenchmarkNewMerkleTree(b *testing.B) {
 	data := [][]byte{[]byte("a"), []byte("c"), []byte("d"), []byte("e"), []byte("f")}
 	for b.Loop() {
