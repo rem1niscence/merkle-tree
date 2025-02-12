@@ -1,11 +1,14 @@
 package merkle
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 )
 
 var ErrEmptyData = errors.New("no data provided")
+var ErrNodeNotFound = errors.New("node not found")
 
 type Node struct {
 	Hash   [32]byte
@@ -19,7 +22,6 @@ type MerkleTree struct {
 }
 
 func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
-
 	root, err := buildMerkleTree(data)
 	if err != nil {
 		return nil, err
@@ -28,6 +30,39 @@ func NewMerkleTree(data [][]byte) (*MerkleTree, error) {
 	return &MerkleTree{
 		Root: root,
 	}, nil
+}
+
+func (m *MerkleTree) MerkleProof(value []byte) ([][]byte, error) {
+	hash := sha256.Sum256(value)
+	node := m.findNode(hash[:], m.Root)
+	if node == nil {
+		return nil, fmt.Errorf("proof cannot be generated: %w", ErrNodeNotFound)
+	}
+
+	return [][]byte{}, nil
+}
+
+// findNode traverses the merkle tree using Depth-First-Search and returns a node
+// with the given hash, or nil if not found
+func (m *MerkleTree) findNode(hash []byte, node *Node) *Node {
+	if bytes.Equal(node.Hash[:], hash) {
+		return node
+	}
+
+	if node.Left != nil {
+		leftNode := m.findNode(hash, node.Left)
+		if leftNode != nil {
+			return leftNode
+		}
+	}
+	if node.Right != nil {
+		rightNode := m.findNode(hash, node.Right)
+		if rightNode != nil {
+			return rightNode
+		}
+	}
+
+	return nil
 }
 
 func buildMerkleTree(data [][]byte) (*Node, error) {
