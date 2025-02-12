@@ -19,5 +19,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("tree: %+v\n", tree.Root)
+	fmt.Printf("root: %+x\n", tree.Root.Hash)
 }

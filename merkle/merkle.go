@@ -46,6 +46,11 @@ func buildMerkleTree(data [][]byte) (*Node, error) {
 			Parent: nil,
 		})
 	}
+	// need to duplicate the last node in order to make a balanced tree
+	// this one only applies for a single-item merkle tree
+	if len(nodes)%2 != 0 {
+		nodes = append(nodes, nodes[len(nodes)-1])
+	}
 
 	// Step 2 - Build the tree
 	for len(nodes) > 1 {
